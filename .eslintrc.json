@@ -10,7 +10,7 @@
    ,  "@typescript-eslint/comma-spacing": ["error", {"before": false, "after": true}]
    ,  "@typescript-eslint/consistent-indexed-object-style": ["error", "index-signature"]
    ,  "@typescript-eslint/consistent-type-assertions": ["error", {"assertionStyle": "as"}]
-   ,  "@typescript-eslint/explicit-function-return-type": "warn"
+   // ,  "@typescript-eslint/explicit-function-return-type": "warn"
    ,  "@typescript-eslint/keyword-spacing": "error"
    ,  "@typescript-eslint/member-delimiter-style": "error"
    ,  "@typescript-eslint/method-signature-style": ["error", "property"]
