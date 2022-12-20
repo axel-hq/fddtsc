@@ -1,0 +1,7 @@
+{
+   "extends": "..",
+   "compilerOptions": {
+      "outDir": "bin",
+   },
+   "include": ["src/*.ts"],
+}

@@ -1,5 +1,4 @@
 {  "compilerOptions":
-   // type checking
    {  "exactOptionalPropertyTypes": true
    ,  "noImplicitAny": true
    ,  "noImplicitReturns": true
@@ -7,19 +6,14 @@
    ,  "noUncheckedIndexedAccess": true
    ,  "strict": true
    ,  "useUnknownInCatchVariables": true
-   // modules
    ,  "moduleResolution": "node16"
-   // emit
    ,  "newLine": "lf"
    ,  "noEmitOnError": true
-   ,  "sourceMap": true
-   ,  "removeComments": false
-   // interop constraints
    ,  "esModuleInterop": true
    ,  "forceConsistentCasingInFileNames": true
-   // Language and Environment
    ,  "lib": ["es2020"]
+   ,  "module": "es2020"
    ,  "target": "es2020"
    }
-,  "include": ["src/*.ts"]
+,  "include": ["fddtsc.ts"]
 }

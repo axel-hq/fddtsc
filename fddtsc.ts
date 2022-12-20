@@ -1,24 +1,21 @@
+#!/usr/bin/env node
 import fs from "fs";
 import ts from "typescript";
-import {dirname} from "path";
+import path from "path";
 
-const tsconfig_location = process.argv[2];
+let tsconfig_location = process.argv[2];
 if (tsconfig_location == null) {
-   throw new Error("need argument for tsconfig.json");
+   tsconfig_location = "tsconfig.json";
 }
 const config_text = fs.readFileSync(tsconfig_location, "utf8");
-/**
- * This is just JSON.parse with comments.
- * It wants the filename too so that it can generate diagnostics.
- */
 const json_parse_result = ts.parseConfigFileTextToJson(tsconfig_location, config_text);
 
 function print_diagnostics(diagnostics: readonly ts.Diagnostic[]) {
    for (const diag of diagnostics) {
       let message = "Error";
       if (diag.file && diag.start) {
-         let {line, character} = diag.file.getLineAndCharacterOfPosition(diag.start);
-         message += ` ${diag.file.fileName} (${line + 1},${character + 1})`;
+         const {line, character: chr} = diag.file.getLineAndCharacterOfPosition(diag.start);
+         message += ` ${diag.file.fileName} (${line + 1},${chr + 1})`;
       }
       message += ": " + ts.flattenDiagnosticMessageText(diag.messageText, "\n");
       console.log(message);
@@ -30,21 +27,11 @@ if (json_parse_result.error != null) {
    process.exit(1);
 }
 
-const config_obj = json_parse_result.config;
-delete config_obj.tsBuildInfoFile;
-const prescribed: ts.CompilerOptions = {
-   declaration: true,
-   emitDeclarationOnly: true,
-   composite: false,
-   incremental: false,
-   watch: false,
-};
-Object.assign(config_obj, prescribed);
-
+const raw_obj = json_parse_result.config;
 const __ts_pcl = ts.parseJsonConfigFileContent(
-   config_obj,
+   raw_obj,
    ts.sys,
-   dirname(tsconfig_location),
+   path.dirname(tsconfig_location),
 );
 
 if (__ts_pcl.errors.length > 0) {
@@ -52,12 +39,21 @@ if (__ts_pcl.errors.length > 0) {
    process.exit(1);
 }
 
+delete __ts_pcl.options.tsBuildInfoFile;
+const prescribed: ts.CompilerOptions = {
+   declaration: true,
+   composite: false,
+   incremental: false,
+   watch: false,
+};
+Object.assign(__ts_pcl.options, prescribed);
+
 const host = ts.createCompilerHost(__ts_pcl.options, true);
 const program = ts.createProgram(__ts_pcl.fileNames, __ts_pcl.options, host);
 print_diagnostics(ts.getPreEmitDiagnostics(program));
 const checker = program.getTypeChecker();
 
-class tst implements ts.CustomTransformer {
+class CoreTran implements ts.CustomTransformer {
    constructor(protected ctx: ts.TransformationContext) {}
 
    transformBundle(bundle: ts.Bundle) {
@@ -78,30 +74,29 @@ class tst implements ts.CustomTransformer {
          const ranges = ts.getLeadingCommentRanges(raw, start);
          return ranges?.map(({pos, end}) => raw.slice(pos, end).trim()) ?? [];
       };
-      const routing_visitor = (node: ts.Node): ts.VisitResult<ts.Node> => {
+      const route = (node: ts.Node): ts.VisitResult<ts.Node> => {
          if (ts.isTypeAliasDeclaration(node)) {
             if (comments_before(node).includes("//! fddtsc::bake")) {
                return this.bake(node);
             }
          } else
-
          if (ts.isTypeReferenceNode(node)) {
             const typ = checker.getTypeFromTypeNode(node);
             const origin = typ.aliasSymbol?.declarations?.filter(ts.isTypeAliasDeclaration) ?? [];
             for (const tad of origin) {
                const comments = comments_before(tad);
-               if (comments.includes("//! fddtsc::newtype")) {
+               if (comments.includes("//! foundatsion::newtype")) {
                   return this.unknown();
                }
-               if (comments.includes("//! fddtsc::unwrap")) {
+               if (comments.includes("//! foundatsion::unwrap")) {
                   return node.typeArguments || node;
                }
             }
          }
 
-         return ts.visitEachChild(node, routing_visitor, this.ctx);
+         return ts.visitEachChild(node, route, this.ctx);
       };
-      return ts.visitEachChild(src, routing_visitor, this.ctx);
+      return ts.visitEachChild(src, route, this.ctx);
    }
 
    bake(ta: ts.TypeAliasDeclaration) {
@@ -129,17 +124,15 @@ class tst implements ts.CustomTransformer {
    }
 }
 
-const lsga = program.emit(
+const l_sga = program.emit(
    undefined,
    undefined,
    undefined,
-   undefined,
-   {afterDeclarations: [ctx => new tst(ctx)]},
+   true, // emitOnlyDtsFiles
+   {afterDeclarations: [ctx => new CoreTran(ctx)]},
 );
 
 // Report errors
-print_diagnostics(lsga.diagnostics);
+print_diagnostics(l_sga.diagnostics);
 
-// Return code
-let exitCode = lsga.emitSkipped ? 1 : 0;
-process.exit(exitCode);
+process.exit(l_sga.emitSkipped ? 1 : 0);

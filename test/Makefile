@@ -6,5 +6,5 @@ else
 	PATH := $/node_modules/.bin:$(PATH)
 endif
 
-fddtsc.js: fddtsc.ts
-	tsc
+dts:
+	fddtsc tsconfig.json
