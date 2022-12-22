@@ -10,8 +10,13 @@ test: build
 	make -C test test
 .PHONY: test
 
+help: build
+	node fddtsc --help
+.PHONY: help
+
 build: fddtsc.js
 	-
+.PHONY: build
 
 fddtsc.js: fddtsc.ts
 	tsc

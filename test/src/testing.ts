@@ -20,5 +20,5 @@ export function div(a: even, b: even): uint {
    return (a / b) as never;
 }
 
-//! fddtsc::bake
+//! foundatsion::bake
 export type baked = F.tt.merge<{a: 1} & {b: 2}>;

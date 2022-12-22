@@ -1,7 +1,7 @@
 {  "root": true
 ,  "parser": "@typescript-eslint/parser"
 ,  "plugins": ["@typescript-eslint"]
-,  "overrides": [{"files": "src/*.ts", "parserOptions": {"project": "tsconfig.json"}}]
+,  "overrides": [{"files": "fddtsc.ts", "parserOptions": {"project": "tsconfig.json"}}]
 ,  "rules":
    {  "block-spacing": "error"
    ,  "quote-props": ["error", "consistent-as-needed"]

@@ -10,4 +10,4 @@ test: dts
 	ava $@
 
 dts:
-	fddtsc tsconfig.json
+	fddtsc --outDir ban --declarationDir bin
