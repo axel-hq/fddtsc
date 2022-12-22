@@ -6,5 +6,8 @@ else
 	PATH := $/node_modules/.bin:$(PATH)
 endif
 
+test: dts
+	ava $@
+
 dts:
 	fddtsc tsconfig.json

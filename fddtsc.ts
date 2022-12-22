@@ -3,10 +3,7 @@ import fs from "fs";
 import ts from "typescript";
 import path from "path";
 
-let tsconfig_location = process.argv[2];
-if (tsconfig_location == null) {
-   tsconfig_location = "tsconfig.json";
-}
+const tsconfig_location = process.argv[2] ?? "tsconfig.json";
 const config_text = fs.readFileSync(tsconfig_location, "utf8");
 const json_parse_result = ts.parseConfigFileTextToJson(tsconfig_location, config_text);
 
@@ -22,9 +19,9 @@ function print_diagnostics(diagnostics: readonly ts.Diagnostic[]) {
    }
 }
 
-if (json_parse_result.error != null) {
+if (json_parse_result.error) {
    print_diagnostics([json_parse_result.error]);
-   process.exit(1);
+   process.exit(json_parse_result.error.code);
 }
 
 const raw_obj = json_parse_result.config;
@@ -55,17 +52,14 @@ const checker = program.getTypeChecker();
 
 class CoreTran implements ts.CustomTransformer {
    constructor(protected ctx: ts.TransformationContext) {}
-
    transformBundle(bundle: ts.Bundle) {
       return bundle;
    }
-
    unknown() {
       return this.ctx.factory.createKeywordTypeNode(
          ts.SyntaxKind.UnknownKeyword
       );
    }
-
    transformSourceFile(src: ts.SourceFile): ts.SourceFile {
       const comments_before = (node: ts.Node): string[] => {
          const file = node.getSourceFile() ?? src;
@@ -93,12 +87,10 @@ class CoreTran implements ts.CustomTransformer {
                }
             }
          }
-
          return ts.visitEachChild(node, route, this.ctx);
       };
       return ts.visitEachChild(src, route, this.ctx);
    }
-
    bake(ta: ts.TypeAliasDeclaration) {
       const type = checker.getTypeFromTypeNode(ta.type);
       const baked_typenode = checker.typeToTypeNode(
@@ -132,7 +124,5 @@ const l_sga = program.emit(
    {afterDeclarations: [ctx => new CoreTran(ctx)]},
 );
 
-// Report errors
 print_diagnostics(l_sga.diagnostics);
-
 process.exit(l_sga.emitSkipped ? 1 : 0);
