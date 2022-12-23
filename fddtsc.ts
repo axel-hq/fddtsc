@@ -6,23 +6,49 @@ import path from "node:path";
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const meta = JSON.parse(fs.readFileSync(`${__dirname}/package.json`, "utf8"));
+
+let r; // reset
+let c; // cyan
+let m; // magenta
+let y; // yellow
+let b; // blue
+let d; // dim
+
+if (process.stdout.isTTY && process.stderr.isTTY) {
+   r = "\x1b[0m";
+   c = "\x1b[96m";
+   m = "\x1b[95m";
+   y = "\x1b[93m";
+   b = "\x1b[94m";
+   d = "\x1b[2m";
+} else {
+   r = "";
+   c = "";
+   m = "";
+   y = "";
+   b = "";
+   d = "";
+}
+
+[r, c, m, y, b, d] satisfies string[];
+
 const help =
-   [ `\x1b[93m@axel-hq\x1b[0m/\x1b[95mfddtsc\x1b[0m@${meta.version}: foundatsion's d.ts generator`
+   [ `${y}@axel-hq${r}/${m}fddtsc${r}@${meta.version}: foundatsion's d.ts generator`
    , ""
-   , "\x1b[95mfddtsc\x1b[0m [\x1b[94mflag\x1b[0m [\x1b[96marg\x1b[0m], ...]"
+   , `${m}fddtsc${r} [${b}flag${r} [${c}arg${r}], ...]`
    , ""
-   , "\x1b[94m--help, -h\x1b[0m"
+   , `${b}--help, -h${r}`
    , "   Print this message."
    , ""
-   , "\x1b[94m--project, -p\x1b[0m (\x1b[96mpath\x1b[0m)"
+   , `${b}--project, -p${r} (${c}path${r})`
    , "   Use a different tsconfig.json file."
    , "   Either a directory containing tsconfig.json or a file."
    , ""
-   , "\x1b[94m--outDir\x1b[0m (\x1b[96mpath\x1b[0m)"
+   , `${b}--outDir${r} (${c}path${r})`
    , "   Specify an output folder for all emitted files."
    , "   Note that declarationDir overrides this."
    , ""
-   , "\x1b[94m--declarationDir\x1b[0m (\x1b[96mpath\x1b[0m)"
+   , `${b}--declarationDir${r} (${c}path${r})`
    , "   Specify the output directory for generated declaration files."
    , "",
    ].join("\n");
@@ -30,46 +56,51 @@ const help =
 let project = "tsconfig.json";
 let outDir;
 let declarationDir;
+let fatal = false;
+let warn = false;
 
 for (let i = 2; i < process.argv.length; i++) {
    const arg = process.argv[i];
+   if (arg === "-h" || arg === "--help") {
+      process.stdout.write(help);
+      process.exit(0);
+   }
+
    switch (arg) {
-      case "--help": case "-h":
-         process.stdout.write(help);
-         process.exit(0);
-      case "--project": case "-p": {
-         const arg2 = process.argv[i + 1];
-         if (typeof arg2 !== "string") {
-            process.stderr.write(`${arg} expected an argument!\n`);
-            process.exit(1);
-         }
-         i++;
+      case "-p":
+      case "--project":
+      case "--outDir":
+      case "--declarationDir": break;
+      default:
+         warn = true;
+         process.stderr.write(`${d}[fddtsc warn] unknown argument ${JSON.stringify(arg)}${r}.\n`);
+         continue;
+   }
+
+   const arg2 = process.argv[++i];
+   if (typeof arg2 !== "string") {
+      process.stderr.write(`[fddtsc fatal] ${b}${arg}${r} expected a ${c}path${r}!\n`);
+      fatal = true;
+   } else switch (arg) {
+      case "-p":
+      case "--project":
          project = arg2;
          break;
-      }
-      case "--outDir": {
-         const arg2 = process.argv[i + 1];
-         if (typeof arg2 !== "string") {
-            process.stderr.write(`${arg} expected an argument!\n`);
-            process.exit(1);
-         }
+      case "--outDir":
          outDir = arg2;
-         i++;
          break;
-      }
-      case "--declarationDir": {
-         const arg2 = process.argv[i + 1];
-         if (typeof arg2 !== "string") {
-            process.stderr.write(`${arg} expected an argument!\n`);
-            process.exit(1);
-         }
+      case "--declarationDir":
          declarationDir = arg2;
-         i++;
          break;
-      }
-      default:
-         process.stderr.write(`[fddtsc warn] ignored argument ${i}: ${JSON.stringify(arg)}\n`);
    }
+}
+
+if (fatal || warn) {
+   process.stderr.write(`${d}[fddtsc warn] run 'fddtsc --help' for usage info.${r}\n`);
+}
+
+if (fatal) {
+   process.exit(0);
 }
 
 if (fs.statSync(project).isDirectory()) {

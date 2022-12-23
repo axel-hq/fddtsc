@@ -1,11 +1,12 @@
 {
    "name": "@axel-hq/fddtsc",
-   "version": "0.1.0",
+   "version": "0.1.1",
    "license": "Unlicense",
    "author": {
       "name": "A. S. Pando",
       "url": "https://github.com/AS-Pando"
    },
+   "contributors": [],
    "type": "module",
    "files": ["fddtsc.js"],
    "bin": {"fddtsc": "./fddtsc.js"},
