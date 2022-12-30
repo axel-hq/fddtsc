@@ -1,6 +1,6 @@
 {
    "name": "@axel-hq/fddtsc",
-   "version": "0.1.1",
+   "version": "0.2.0",
    "license": "Unlicense",
    "author": {
       "name": "A. S. Pando",
@@ -8,8 +8,12 @@
    },
    "contributors": [],
    "type": "module",
-   "files": ["fddtsc.js"],
-   "bin": {"fddtsc": "./fddtsc.js"},
+   "files": [
+      "fddtsc.js"
+   ],
+   "bin": {
+      "fddtsc": "./fddtsc.js"
+   },
    "dependencies": {
       "typescript": "^4.9.4"
    },
@@ -17,6 +21,7 @@
       "@types/node": "^18.11.17",
       "@typescript-eslint/eslint-plugin": "^5.30.5",
       "@typescript-eslint/parser": "^5.30.5",
+      "esbuild": "0.16.12",
       "eslint": "^8.22.0"
    },
    "engines": {

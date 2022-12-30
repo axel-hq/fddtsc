@@ -19,7 +19,8 @@ build: fddtsc.js
 .PHONY: build
 
 fddtsc.js: fddtsc.ts
-	tsc
+	tsc --noEmit
+	esbuild $< --platform=node --format=esm --minify --outfile=$@
 
 install:
 	npm i

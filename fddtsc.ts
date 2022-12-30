@@ -103,6 +103,12 @@ if (fatal) {
    process.exit(0);
 }
 
+// Reading in the config file is actually such a pain in the ass.
+// Here are the steps, roughly:
+// 1. read the text in
+// 2. parse the json with a special parser because comments and comma dangle
+// 3. convert that object into the actual configuration format that typescript
+//    uses because it's not actually the stuff in tsconfig.json.
 if (fs.statSync(project).isDirectory()) {
    project = `${project}/tsconfig.json`;
 }
@@ -138,30 +144,44 @@ if (__ts_pcl.errors.length > 0) {
    process.exit(1);
 }
 
+// time to set options that we either got from the command line or are going to
+// force. it'd be pretty stupid if we didn't set declaration because that's what
+// this entire script is supposed to generate.
 if (outDir != null) {
    __ts_pcl.options.outDir = outDir;
 }
 if (declarationDir != null) {
    __ts_pcl.options.declarationDir = declarationDir;
 }
-
-delete __ts_pcl.options.tsBuildInfoFile;
+delete __ts_pcl.options.tsBuildInfoFile; // this is like for incremental stuff
 const prescribed: ts.CompilerOptions = {
    declaration: true,
-   composite: false,
-   incremental: false,
-   watch: false,
+   composite: false, // I have no idea what this is
+   incremental: false, // this causes an issue if left true
+   watch: false, // oh yeah I guess they added some kind of watching thing
 };
 Object.assign(__ts_pcl.options, prescribed);
 
-const host = ts.createCompilerHost(__ts_pcl.options, true);
+const host = ts.createCompilerHost(
+   __ts_pcl.options,
+   true, // this means that node.parent will be set
+);
 const program = ts.createProgram(__ts_pcl.fileNames, __ts_pcl.options, host);
 print_diagnostics(ts.getPreEmitDiagnostics(program));
 const checker = program.getTypeChecker();
 
+// alright I'm going to roughly explain how this works for whoever has to come
+// along later to fix whatever unspeakable bugs are caused by Microsoft.
+// This is a thingie that takes in a bunch of syntax nodes and spits out a bunch
+// of syntax nodes and since it's a tree it's kinda recursive.
 class CoreTran implements ts.CustomTransformer {
    constructor(protected ctx: ts.TransformationContext) {}
    transformBundle(bundle: ts.Bundle) {
+      // I have a sinking suspicion that I should've figured out when this is
+      // called and also tried to transform nodes inside of here.
+      // If the scenario occurs that nothing is being transformed when you've
+      // doing something related to bundling, this is probably it.
+      // I don't really think typescript does any bundling but I could be wrong.
       return bundle;
    }
    unknown() {
@@ -205,6 +225,20 @@ class CoreTran implements ts.CustomTransformer {
          }
          return ts.visitEachChild(node, route, this.ctx);
       };
+      // So this here is what kicks off the process of transforming the nodes.
+      // There are a lot of different nodes which contain child nodes in a
+      // variety of different fields.
+
+      // You do not want to have a big switch to check if you're dealing with
+      // x node or y node. Just let typescript call your function on every node
+      // for you.
+
+      // As you may notice, this function only visits the child nodes one layer
+      // deep. To actually traverse the entire syntax tree, you must call this
+      // recursively.
+
+      // To begin the process of transforming stuff, we're going to first search
+      // for our special comments and then decide what to do later.
       return ts.visitEachChild(src, route, this.ctx);
    }
    bake(ta: ts.TypeAliasDeclaration) {
@@ -213,6 +247,9 @@ class CoreTran implements ts.CustomTransformer {
          type,
          undefined,
          0
+         // these flags seem to cause the baking.
+         // there is no real official documentation and I just kinda tried flags
+         // until I got what I wanted.
          | ts.NodeBuilderFlags.NoTruncation
          | ts.NodeBuilderFlags.InTypeAlias
          | ts.NodeBuilderFlags.UseFullyQualifiedType
@@ -227,6 +264,8 @@ class CoreTran implements ts.CustomTransformer {
             baked_typenode,
          );
       } else {
+         // I guess sometimes it can fail?
+         // Again, no real documentation.
          return ta;
       }
    }

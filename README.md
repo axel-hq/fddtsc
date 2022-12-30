@@ -1,10 +1,47 @@
 # fddtsc
 
-*FounDatsion Declaration TypeScript Compiler*
+<i><u>f</u>oun<u>d</u>atsion <u>d</u>eclaration <u>t</u>ype<u>s</u>cript file <u>c</u>ompiler</i>
 
 ## usage
 
-`fddtsc [--help] [--project foo/bar/tsconfig.json] [--declarationDir bin/dts]`
+<pre><code style="color: khaki">@axel-hq</code><code>/</code><code style="color: violet">fddtsc</code><code>: foundatsion's d.ts generator
+
+<code style="color: violet">fddtsc</code> [</code><code style="color: skyblue">flag</code><code> [</code><code style="color: turquoise">arg</code><code>], ...]
+
+</code><code style="color: skyblue">-help, -h</code><code>
+   Print this message.
+
+</code><code style="color: skyblue">--project, -p</code><code> (</code><code style="color: turquoise">path</code><code>)
+   Use a different tsconfig.json file.
+   Either a directory containing tsconfig.json or a file.
+
+</code><code style="color: skyblue">--outDir</code><code> (</code><code style="color: turquoise">path</code><code>)
+   Specify an output folder for all emitted files.
+   Note that declarationDir overrides this.
+
+</code><code style="color: skyblue">--declarationDir</code><code> (</code><code style="color: turquoise">path</code><code>)
+   Specify the output directory for generated declaration files.
+</code></pre>
+
+## ffaq (fake frequently asked questions)
+
+<details open>
+   <summary>Who is this for?</summary>
+   Anyone that uses
+   <a href="https://www.npmjs.com/package/@axel-hq/foundatsion">@axel-hq/foundatsion</a>
+   who plans to publish a library that would expose newtypes through d.ts files.
+</details>
+
+<details open>
+   <summary>What does it do?</summary>
+   Imagine you wanted to expose a method like <code>add1(a: F.uint): F.uint)`</code>.
+   Without some special compiler magic, you'd have to create a wrapped <code>add1</code>
+   which took numbers instead of foundatsion types; foundatsion types are hard
+   to consume and create for non-foundatsion users.
+
+   This, here, is the compiler magic that makes newtypes disappear within d.ts
+   files.
+</details>
 
 ## transform calls //!
 
@@ -40,6 +77,7 @@ the time<sub>
 
 ## for developers
 
-1. `make build`
-2. `make install`
-3. `make test`
+1. `make install`
+2. `make build`
+3. `make install` (again to install what you just built into the test)
+4. `make test`
